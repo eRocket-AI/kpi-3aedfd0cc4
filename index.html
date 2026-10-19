@@ -1,0 +1,681 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta name="robots" content="noindex, nofollow">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KPI-dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#F5F7F6;--surface:#FFFFFF;--surface-2:#F0F3F1;
+  --text:#18201C;--text-2:#46504B;--muted:#68726D;--border:#E1E6E3;--grid:#EBEFED;
+  --accent:#05A467;--accent-ink:#04855A;--accent-soft:#E5F6EE;
+  --series-1:#05A467;--series-2:#4A3AA7;--ref:#68726D;
+  --good:#0CA30C;--warning:#FAB219;--critical:#D03B3B;
+  --good-soft:#E6F5E6;--warning-soft:#FEF4DD;--critical-soft:#FBE9E9;
+  --shadow:0 1px 2px rgba(16,24,20,.06),0 1px 1px rgba(16,24,20,.04);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:400 15px/1.45 Raleway,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-weight:700;margin:0}
+button{font:inherit;color:inherit}
+.wrap{max-width:1100px;margin:0 auto;padding:16px 16px 20px}
+header{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:flex-end;justify-content:space-between;margin-bottom:12px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-ink)}
+h1{font-size:24px;line-height:1.15;font-weight:800}
+.sub{color:var(--text-2);margin-top:2px}
+.fresh{font-size:13px;color:var(--muted);text-align:right}
+.fresh b{color:var(--text-2);font-weight:600}
+.controls{display:flex;flex-wrap:wrap;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:8px 10px;margin-bottom:12px;box-shadow:var(--shadow)}
+.seg{display:inline-flex;background:var(--surface-2);border-radius:8px;padding:3px}
+.seg button{border:0;background:transparent;padding:6px 14px;border-radius:6px;font-weight:600;font-size:14px;color:var(--text-2);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+.nav{display:flex;align-items:center;gap:6px;flex:1;min-width:300px}
+.nav button{border:1px solid var(--border);background:var(--surface);width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:18px;line-height:1}
+.nav button:disabled{opacity:.35;cursor:default}
+.nav select{flex:1;min-width:0;height:34px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font:600 14px Raleway,sans-serif;padding:0 10px}
+.cmp{font-size:13px;color:var(--muted)}
+.groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-bottom:16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 6px 6px;box-shadow:var(--shadow)}
+.card h2{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-ink);margin:0 10px 4px}
+.row{display:grid;grid-template-columns:1fr auto 92px;column-gap:14px;align-items:baseline;width:100%;text-align:left;border:0;background:transparent;border-radius:8px;padding:6px 10px;cursor:pointer}
+.row+.row{border-top:1px solid var(--grid)}
+.row:hover,.row:focus-visible{background:var(--surface-2);outline:none}
+.r-label{font-weight:600;font-size:14px}
+.r-val{grid-column:3;grid-row:1;font-weight:800;font-size:16px;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.r-val.na{font-weight:600;font-size:13px;color:var(--muted)}
+.r-goal{grid-column:2;grid-row:1;font-size:12px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pill{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:2px 8px;font-weight:700;font-size:11.5px}
+.pill.good{background:var(--good-soft);color:var(--text)} .pill.good i{color:var(--good)}
+.pill.warning{background:var(--warning-soft);color:var(--text)} .pill.warning i{color:#B07A00}
+.pill.critical{background:var(--critical-soft);color:var(--text)} .pill.critical i{color:var(--critical)}
+.pill i{font-style:normal}
+.costs{max-height:none;margin:-4px 0 14px;border:0}.costs table{border:1px solid var(--border);border-radius:10px;overflow:hidden}.costs .tot td{font-weight:800;border-bottom:0}.costs .note{padding:0 2px}
+.dsum{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:8px 0 14px}
+.dsum div{background:var(--surface-2);border-radius:10px;padding:10px 12px}
+.dsum small{display:block;font-size:11.5px;color:var(--muted);font-weight:600}
+.dsum b{display:block;font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:2px}
+.dsum span{display:block;font-size:12px;color:var(--text-2);margin-top:4px}
+footer{font-size:11.5px;color:var(--muted);border-top:1px solid var(--border);padding-top:10px;line-height:1.5}
+.state{padding:48px 16px;text-align:center;color:var(--text-2)}
+/* detail */
+dialog{border:0;padding:0;border-radius:16px;background:var(--surface);color:var(--text);width:min(960px,calc(100vw - 32px));max-height:calc(100vh - 32px);box-shadow:0 20px 60px rgba(0,0,0,.25)}
+dialog::backdrop{background:rgba(10,14,12,.45)}
+.d-head{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;padding:18px 20px 6px}
+.d-head h3{font-size:20px}
+.d-close{border:0;background:var(--surface-2);width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:18px;flex:none}
+.d-body{padding:6px 20px 20px;overflow:auto;max-height:calc(100vh - 110px)}
+.d-bar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin:6px 0 10px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--text-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend svg{width:22px;height:8px}
+.chart{position:relative}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.tip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12.5px;box-shadow:0 6px 20px rgba(0,0,0,.12);min-width:150px;opacity:0;transition:opacity .1s;z-index:2}
+.tip .h{color:var(--muted);font-size:12px;margin-bottom:4px}
+.tip .r{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.tip .r b{font-variant-numeric:tabular-nums}
+.tip .k{display:inline-flex;align-items:center;gap:6px;color:var(--text-2)}
+.tip .k svg{width:14px;height:6px}
+.note{font-size:12.5px;color:var(--muted);margin-top:8px}
+table{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}
+th,td{padding:7px 10px;border-bottom:1px solid var(--border);text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--text-2);font-weight:700;position:sticky;top:0;background:var(--surface)}
+.tbl{max-height:360px;overflow:auto;border:1px solid var(--border);border-radius:10px}
+.linkbtn{border:0;background:none;color:var(--accent-ink);font-weight:700;cursor:pointer;padding:0;font-size:13px}
+@media (max-width:560px){h1{font-size:23px}.fresh{text-align:left}}
+@page{size:A4 portrait;margin:10mm}
+@media print{
+  :root{color-scheme:light;--bg:#fff;--surface:#fff;--surface-2:#F0F3F1;--text:#18201C;--text-2:#46504B;--muted:#68726D;--border:#D9DFDC;--grid:#E6EAE8;--accent-ink:#04855A;--shadow:none}
+  body{font-size:12px}.wrap{max-width:none;padding:0}
+  header{margin-bottom:8px}h1{font-size:20px}
+  .controls{border:0;padding:0;margin-bottom:8px;box-shadow:none}.seg,.nav button,.cmp{display:none}
+  .nav select{border:0;padding:0;appearance:none;-webkit-appearance:none;font-size:13px}
+  .groups{grid-template-columns:1fr 1fr;gap:8px}.card{break-inside:avoid;padding:6px 4px 4px}
+  .row{padding:3px 8px;grid-template-columns:1fr auto 80px}.r-val{font-size:14px}.r-label{font-size:12.5px}
+  dialog{display:none}footer{font-size:9.5px;padding-top:6px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow"><span style="text-transform:none">eRocket</span> · marketingdashboard</div>
+      <h1 id="title">KPI-dashboard</h1>
+    </div>
+    <div class="fresh" id="fresh"></div>
+  </header>
+
+  <div class="controls" role="group" aria-label="Periode">
+    <div class="seg" id="gran">
+      <button type="button" data-g="dag" aria-pressed="false">Dag</button>
+      <button type="button" data-g="week" aria-pressed="true">Week</button>
+      <button type="button" data-g="maand" aria-pressed="false">Maand</button>
+    </div>
+    <div class="nav">
+      <button type="button" id="prev" aria-label="Vorige periode">‹</button>
+      <select id="period" aria-label="Kies periode"></select>
+      <button type="button" id="next" aria-label="Volgende periode">›</button>
+    </div>
+    <div class="cmp" id="cmpnote"></div>
+  </div>
+
+  <main id="main"><div class="state">Data laden…</div></main>
+
+</div>
+
+<dialog id="detail" aria-labelledby="d-title">
+  <div class="d-head">
+    <div>
+      <div class="eyebrow" id="d-group"></div>
+      <h3 id="d-title"></h3>
+      <div class="t-sub" id="d-sub"></div>
+    </div>
+    <button class="d-close" type="button" id="d-close" aria-label="Sluiten">✕</button>
+  </div>
+  <div class="d-body">
+    <div class="dsum" id="d-sum"></div>
+    <div class="tbl costs" id="d-cost" hidden></div>
+    <div class="d-bar">
+      <div class="seg" id="d-range"></div>
+      <div class="legend" id="d-legend"></div>
+      <button class="linkbtn" type="button" id="d-toggle">Toon tabel</button>
+    </div>
+    <div class="chart" id="d-chart"></div>
+    <div class="tbl" id="d-table" hidden></div>
+    <div class="note" id="d-note"></div>
+  </div>
+</dialog>
+
+<script>
+(() => {
+"use strict";
+
+// ---------- helpers ----------
+const $ = s => document.querySelector(s);
+const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+const SVGNS = "http://www.w3.org/2000/svg";
+const sv = (tag, attrs) => { const n = document.createElementNS(SVGNS, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); return n; };
+const DAY = 86400000;
+const toD = s => new Date(s + "T00:00:00Z");
+const iso = d => d.toISOString().slice(0, 10);
+const addDays = (s, n) => iso(new Date(toD(s).getTime() + n * DAY));
+const diffDays = (a, b) => Math.round((toD(b) - toD(a)) / DAY);
+const MND = ["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
+const MNDL = ["januari","februari","maart","april","mei","juni","juli","augustus","september","oktober","november","december"];
+const fmtDay = s => { const d = toD(s); return d.getUTCDate() + " " + MND[d.getUTCMonth()]; };
+const fmtDayY = s => { const d = toD(s); return d.getUTCDate() + " " + MND[d.getUTCMonth()] + " " + d.getUTCFullYear(); };
+const isoWeek = s => { const d = toD(s); const t = new Date(d); t.setUTCDate(t.getUTCDate() + 3 - ((t.getUTCDay() + 6) % 7)); const w1 = new Date(Date.UTC(t.getUTCFullYear(), 0, 4)); return 1 + Math.round(((t - w1) / DAY - 3 + ((w1.getUTCDay() + 6) % 7)) / 7); };
+const mondayOf = s => addDays(s, -((toD(s).getUTCDay() + 6) % 7));
+const nf = (d) => new Intl.NumberFormat("nl-NL", { minimumFractionDigits: d, maximumFractionDigits: d });
+const F = {
+  eur: v => "€ " + nf(0).format(v),
+  eurc: v => "€ " + nf(2).format(v),
+  pct: v => nf(2).format(v * 100) + "%",
+  x: v => nf(2).format(v),
+  score: v => nf(2).format(v),
+  int: v => nf(0).format(v),
+};
+const fmt = (k, v) => v == null || !isFinite(v) ? "–" : F[k](v);
+const compact = (k, v) => {
+  if (v == null || !isFinite(v)) return "–";
+  if (k === "eur") return Math.abs(v) >= 1000 ? "€ " + nf(Math.abs(v) >= 100000 ? 0 : 1).format(v / 1000) + "k" : "€ " + nf(0).format(v);
+  if (k === "pct") return nf(1).format(v * 100) + "%";
+  if (k === "int") return Math.abs(v) >= 10000 ? nf(1).format(v / 1000) + "k" : nf(0).format(v);
+  return nf(1).format(v);
+};
+
+// ---------- data ----------
+const params = new URLSearchParams(location.search);
+const klant = (params.get("klant") || "automatten").toLowerCase().replace(/[^a-z0-9-]/g, "");
+let D, IDX, LAST, START;
+
+const sumR = (key, a, b) => {           // som over dagen [a, b] (iso, inclusief)
+  const s = D.reeksen[key]; if (!s) return null;
+  let i0 = Math.max(0, diffDays(START, a)), i1 = Math.min(s.length - 1, diffDays(START, b));
+  let t = 0, n = 0;
+  for (let i = i0; i <= i1; i++) if (s[i] != null) { t += s[i]; n++; }
+  return n ? t : null;
+};
+const sumK = (keys, a, b) => { let t = 0, n = 0; for (const k of keys) { const v = sumR(k, a, b); if (v != null) { t += v; n++; } } return n ? t : null; };
+const ratio = (x, y) => x == null || y == null || y === 0 ? null : x / y;
+const clampEnd = b => (b > LAST ? LAST : b);
+const ch = n => "ga4_kanaal_" + n;
+const CH = {
+  seo: [ch("organic_search"), ch("organic_shopping"), ch("organic_video")],
+  geo: [ch("ai_assistant")],
+  email: [ch("email")],
+  sea: [ch("cross_network"), ch("paid_search"), ch("paid_shopping")],
+  social: [ch("paid_social"), ch("organic_social")],
+};
+const COST = ["gads_kosten", "meta_kosten", "bing_kosten"];
+// Bol-advertentiekosten komen per maand uit het budgetbestand en worden naar rato van dagen
+// over de periode verdeeld. 'stale' = voor minstens één maand in de periode is nog geen bedrag
+// ingevuld, of het is de lopende maand (bedrag nog niet compleet).
+function bolCost(a, b) {
+  const M = D.maanden || { maand: [], bol_ads: [] }, e = clampEnd(b);
+  let v = 0, stale = false, seen = false;
+  const api = D.reeksen.bol_ads_kosten;
+  for (let d = a; d <= e; d = addDays(d, 1)) {
+    // eerst de dagcijfers uit de bol Advertising API (excl. btw, net als Google Ads en Meta)
+    const di = diffDays(START, d);
+    if (api && di >= 0 && di < api.length && api[di] != null) { v += api[di]; seen = true; continue; }
+    const m = d.slice(0, 7), i = M.maand.indexOf(m);
+    if (i < 0) { stale = true; continue; }
+    const dt = toD(m + "-01"), dim = new Date(Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth() + 1, 0)).getUTCDate();
+    const lopend = LAST.slice(0, 7) === m && LAST < iso(new Date(Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth(), dim)));
+    if (lopend) stale = true;
+    v += M.bol_ads[i] / (lopend ? toD(LAST).getUTCDate() : dim); seen = true;
+  }
+  return { v: seen ? v : null, stale };
+}
+const kosten = (a, b) => { const k = sumK(COST, a, b); if (!D.bol_in_kosten) return k; const bc = bolCost(a, b).v; return k == null && bc == null ? null : (k || 0) + (bc || 0); };
+const bolStale = (k, x, g) => k.usesKosten && D.bol_in_kosten && (() => { const e = effective(x); return bolCost(e.a, e.b).stale; })();
+// geen gemeten conversiewaarde (bijvoorbeeld Meta vóór maart 2026) is geen ROAS 0 maar geen meting
+const rolling30 = (val, cost, b) => { const e = clampEnd(b); if (e < START) return null; const a = addDays(e, -29); const v = sumR(val, a, e); return v ? ratio(v, sumR(cost, a, e)) : null; };
+// Overal dezelfde rekenwijze: kanaalomzet bruto zoals de bron hem geeft (incl. btw en verzending),
+// gedeeld door de Shopify-omzet (netto). Voor GA4-kanalen alleen over dagen waarop GA4 omzet aan
+// kanalen heeft toegewezen (dekking = 1).
+const shareAbs = (keys, a, b) => {
+  const e = clampEnd(b), cov = D.reeksen.ga4_kanaal_dekking, shop = D.reeksen.omzet; if (!cov) return null;
+  let t = 0, n = 0;
+  const i0 = Math.max(0, diffDays(START, a)), i1 = Math.min(cov.length - 1, diffDays(START, e));
+  for (let i = i0; i <= i1; i++) { if (cov[i] !== 1 || shop[i] == null) continue; n++; for (const k of keys) t += D.reeksen[k][i] || 0; }
+  return n ? t : null;
+};
+const share = (keys, a, b) => {
+  const e = clampEnd(b), cov = D.reeksen.ga4_kanaal_dekking, shop = D.reeksen.omzet; if (!cov) return null;
+  let den = 0; const i0 = Math.max(0, diffDays(START, a)), i1 = Math.min(cov.length - 1, diffDays(START, e));
+  for (let i = i0; i <= i1; i++) if (cov[i] === 1 && shop[i] != null) den += shop[i];
+  return ratio(shareAbs(keys, a, b), den);
+};
+// verwachte ROAS Google Ads: recente klikdagen ophogen tot hun verwachte eindwaarde met de
+// vertragingscurve (deel van de conversiewaarde dat N dagen na de klik binnen is)
+const lagDone = age => {
+  const c = (D.gads_vertraging || {}).curve; if (!c) return 1;
+  if (age >= c[c.length - 1][0]) return 1;
+  let p = [0, 0];
+  for (const q of c) { if (age <= q[0]) return p[1] + (q[1] - p[1]) * (age - p[0]) / (q[0] - p[0]); p = q; }
+  return 1;
+};
+const expectedRoas = b => {
+  const e = clampEnd(b); if (e < START || !D.gads_vertraging) return null;
+  const ref = addDays(LAST, 1), s = D.reeksen.gads_omzet, k = D.reeksen.gads_kosten;
+  let v = 0, c = 0;
+  for (let d = addDays(e, -29); d <= e; d = addDays(d, 1)) {
+    const i = diffDays(START, d); if (i < 0 || s[i] == null) continue;
+    v += s[i] / Math.max(lagDone(diffDays(d, ref)), 0.5); c += k[i] || 0;
+  }
+  return c ? v / c : null;
+};
+// flows = Klaviyo-totaal min het nieuwsbrief-deel (reeks met suffix _nb)
+const flowPart = (key, a, b) => { const t = sumR(key, a, b), n = sumR(key + "_nb", a, b); return t == null || n == null ? null : Math.max(0, t - n); };
+// weekreeksen (Bol, reviews): weken waarvan de maandag in [a, b] valt
+const weekIdx = (a, b) => { const w = D.weken.maandag, r = []; for (let i = 0; i < w.length; i++) if (w[i] >= a && w[i] <= b) r.push(i); return r; };
+const weekSum = (key, a, b) => { const ix = weekIdx(a, b).filter(i => D.weken[key][i] != null); return ix.length ? { v: ix.reduce((t, i) => t + D.weken[key][i], 0), ix } : null; };
+const weekLast = (key, b) => { const w = D.weken.maandag; let v = null; for (let i = 0; i < w.length; i++) if (w[i] <= b && D.weken[key][i] != null) v = D.weken[key][i]; return v; };
+
+const T = () => D.doelen;
+const hasEst = (a, b) => { const s = D.reeksen.omzet_geschat; if (!s) return false; const i0 = Math.max(0, diffDays(START, a)), i1 = Math.min(s.length - 1, diffDays(START, b)); for (let i = i0; i <= i1; i++) if (s[i] === 1) return true; return false; };
+const estFor = (k, x, g, ly) => { if (!k.usesOmzet || (k.weekly && g === "dag")) return false; if (!ly) { const e = effective(x); return hasEst(e.a, e.b); } const l = lastYear(g, x); return hasEst(l.a, l.b); };
+const KPIS = [
+  { id: "omzet", g: "Omzet & kosten", label: "Omzet Shopify", sub: "netto-omzet", f: "eur", kind: "sum", usesOmzet: true,
+    calc: (a, b) => sumR("omzet", a, b), target: (a, b) => T().omzet_shopify ? T().omzet_shopify.per_week / 7 * (diffDays(a, b) + 1) : null, dir: 1 },
+  { id: "kosten", g: "Omzet & kosten", label: "Marketingkosten", sub: "Google Ads + Meta + Bing + Bol-advertenties", f: "eur", kind: "sum", usesKosten: true,
+    calc: (a, b) => kosten(a, b) },
+  { id: "mcr", g: "Omzet & kosten", label: "% Marketingkosten", sub: "MCR, kosten / Shopify-omzet", f: "pct", kind: "rate", usesOmzet: true, usesKosten: true,
+    calc: (a, b) => ratio(kosten(a, b), sumR("omzet", a, b)), target: () => T().mcr, dir: -1 },
+  // kanaalomzet overal bruto (zoals de bron), percentages t.o.v. Shopify-omzet (netto)
+  { id: "gads_omzet", g: "Google Ads", label: "Omzet Google Ads", sub: "conversiewaarde (bruto)", f: "eur", kind: "sum",
+    calc: (a, b) => sumR("gads_omzet", a, b) },
+  { id: "gads_aandeel", g: "Google Ads", label: "Google Ads t.o.v. omzet", sub: "aandeel Shopify-omzet", f: "pct", kind: "rate", usesOmzet: true,
+    calc: (a, b) => ratio(sumR("gads_omzet", a, b), sumR("omzet", a, b)),
+    extras: [
+      { label: "Omzet Google Ads", f: "eur", calc: (a, b) => sumR("gads_omzet", a, b) },
+      { label: "Omzet Shopify", f: "eur", calc: (a, b) => sumR("omzet", a, b) },
+    ] },
+  { id: "roas_gads", g: "Google Ads", label: "ROAS Google Ads", sub: "bruto, rollend 30 dagen t/m einde periode", f: "x", kind: "level",
+    calc: (a, b) => rolling30("gads_omzet", "gads_kosten", b), expected: (a, b) => expectedRoas(b), target: () => T().roas_gads, dir: 1 },
+  { id: "social_omzet", g: "Social", label: "Omzet Social", sub: "GA4 paid + organic social (bruto)", f: "eur", kind: "sum",
+    calc: (a, b) => shareAbs(CH.social, a, b) },
+  { id: "social_aandeel", g: "Social", label: "Social t.o.v. omzet", sub: "aandeel Shopify-omzet", f: "pct", kind: "rate", usesOmzet: true,
+    calc: (a, b) => share(CH.social, a, b) },
+  { id: "roas_social", g: "Social", label: "ROAS Social", sub: "Meta, bruto, rollend 30 dagen, 1d-click", f: "x", kind: "level",
+    calc: (a, b) => rolling30("meta_omzet", "meta_kosten", b), target: () => T().roas_social, dir: 1 },
+  { id: "seo", g: "% omzet per kanaal", label: "SEO", sub: "organisch zoeken, shopping, video", f: "pct", kind: "rate",
+    calc: (a, b) => share(CH.seo, a, b), abs: (a, b) => shareAbs(CH.seo, a, b), absLabel: "Omzet SEO (GA4, bruto)", target: () => T().aandeel_seo, dir: 1 },
+  { id: "geo", g: "% omzet per kanaal", label: "GEO", sub: "AI-assistenten", f: "pct", kind: "rate",
+    calc: (a, b) => share(CH.geo, a, b), abs: (a, b) => shareAbs(CH.geo, a, b), absLabel: "Omzet GEO (GA4, bruto)", target: () => T().aandeel_geo, dir: 1 },
+  // Email komt volledig uit Klaviyo, ook het aandeel (Klaviyo-omzet / Shopify-omzet), niet uit GA4
+  { id: "email", g: "% omzet per kanaal", label: "Email", sub: "Klaviyo-omzet / Shopify-omzet", f: "pct", kind: "rate", usesOmzet: true,
+    calc: (a, b) => ratio(sumR("kl_omzet", a, b), sumR("omzet", a, b)), abs: (a, b) => sumR("kl_omzet", a, b), absLabel: "Omzet e-mail (Klaviyo)", target: () => T().aandeel_email, dir: 1,
+    extras: [
+      { label: "ROAS e-mail", f: "x", kind: "level", calc: (a, b) => rolling30("kl_omzet", "kl_kosten", b) },
+      { label: "Omzet nieuwsbrieven", f: "eur", calc: (a, b) => sumR("kl_omzet_nb", a, b) },
+      { label: "Omzet flows", f: "eur", calc: (a, b) => flowPart("kl_omzet", a, b) },
+      { label: "Click rate nieuwsbrieven", f: "pct", calc: (a, b) => ratio(sumR("kl_clicks_nb", a, b), sumR("kl_ontvangen_nb", a, b)) },
+      { label: "Click rate flows", f: "pct", calc: (a, b) => ratio(flowPart("kl_clicks", a, b), flowPart("kl_ontvangen", a, b)) },
+    ] },
+  // SEA = Google Ads-conversiewaarde / Shopify-omzet, gelijk aan "Google Ads t.o.v. omzet" (keuze Frits 2026-10-12)
+  { id: "sea", g: "% omzet per kanaal", label: "SEA", sub: "Google Ads-conversiewaarde / Shopify-omzet", f: "pct", kind: "rate", usesOmzet: true,
+    calc: (a, b) => ratio(sumR("gads_omzet", a, b), sumR("omzet", a, b)), abs: (a, b) => sumR("gads_omzet", a, b), absLabel: "Omzet SEA (Google Ads, bruto)", target: () => T().aandeel_sea, dir: 1 },
+  { id: "social", g: "% omzet per kanaal", label: "Social media", sub: "paid + organic social", f: "pct", kind: "rate",
+    calc: (a, b) => share(CH.social, a, b), abs: (a, b) => shareAbs(CH.social, a, b), absLabel: "Omzet Social (GA4, bruto)", target: () => T().aandeel_social, dir: 1 },
+  // Bol-omzet = Shopify gross_sales van verkoopkanaal Market Sync, gelijk aan wat bol zelf toont (keuze Frits 2026-10-19)
+  { id: "bol", g: "% omzet per kanaal", label: "Bol (marketplace)", sub: "Bol-omzet / Shopify-omzet", f: "pct", kind: "rate", usesOmzet: true,
+    calc: (a, b) => ratio(sumR("bol_omzet", a, b), sumR("omzet", a, b)),
+    abs: (a, b) => sumR("bol_omzet", a, b), absLabel: "Omzet Bol",
+    extras: [
+      { label: "Orders Bol", f: "int", calc: (a, b) => sumR("bol_orders", a, b) },
+      { label: "Kosten Bol-advertenties", f: "eur", calc: (a, b) => sumR("bol_ads_kosten", a, b) },
+      { label: "Omzet Bol-advertenties (14 dagen)", f: "eur", calc: (a, b) => sumR("bol_ads_omzet", a, b) },
+      { label: "ROAS Bol-advertenties", f: "x", kind: "level", calc: (a, b) => rolling30("bol_ads_omzet", "bol_ads_kosten", b) },
+    ],
+    target: () => T().aandeel_bol, dir: 1 },
+  { id: "conversie", g: "Conversie & reviews", label: "Conversie website", sub: "GA4 aankopen / sessies", f: "pct", kind: "rate",
+    calc: (a, b) => ratio(sumR("ga4_aankopen", a, b), sumR("ga4_sessies", a, b)), target: () => T().conversie, dir: 1 },
+  { id: "reviewscore", g: "Conversie & reviews", label: "Reviewscore", sub: "Kiyoh, Trustpilot, Google (sheet)", f: "score", kind: "level", weekly: true,
+    calc: (a, b) => weekLast("review_score", b), target: () => T().reviewscore, dir: 1,
+    extras: [
+      { label: "Kiyoh (uit 10)", f: "score", kind: "level", weekly: true, calc: (a, b) => weekLast("kiyoh_score", b) },
+      { label: "Google (uit 5)", f: "score", kind: "level", weekly: true, calc: (a, b) => weekLast("google_score", b) },
+      { label: "Trustpilot (uit 5)", f: "score", kind: "level", weekly: true, calc: (a, b) => weekLast("trustpilot_score", b) },
+    ] },
+  { id: "reviews", g: "Conversie & reviews", label: "Aantal reviews", sub: "totaal (sheet)", f: "int", kind: "level", weekly: true,
+    calc: (a, b) => weekLast("review_count", b),
+    extras: [
+      { label: "Kiyoh", f: "int", kind: "level", weekly: true, calc: (a, b) => weekLast("kiyoh_count", b) },
+      { label: "Google", f: "int", kind: "level", weekly: true, calc: (a, b) => weekLast("google_count", b) },
+      { label: "Trustpilot", f: "int", kind: "level", weekly: true, calc: (a, b) => weekLast("trustpilot_count", b) },
+    ] },
+];
+
+// ---------- perioden ----------
+let gran = "week", cur = null;
+function buckets(g) {
+  const out = [];
+  if (g === "dag") { for (let d = START; d <= LAST; d = addDays(d, 1)) out.push({ a: d, b: d }); }
+  else if (g === "week") { for (let d = mondayOf(START); d <= LAST; d = addDays(d, 7)) out.push({ a: d < START ? START : d, b: addDays(d, 6), m: d }); }
+  else { let d = START.slice(0, 7) + "-01"; while (d <= LAST) { const n = toD(d); n.setUTCMonth(n.getUTCMonth() + 1); const nx = iso(n); out.push({ a: d, b: addDays(nx, -1) }); d = nx; } }
+  for (const x of out) x.lopend = x.b > LAST;
+  return out;
+}
+function label(g, x, long) {
+  if (g === "dag") { const d = toD(x.a); return ["zo","ma","di","wo","do","vr","za"][d.getUTCDay()] + " " + fmtDayY(x.a); }
+  if (g === "week") { const m = x.m || x.a; return "Week " + isoWeek(m) + " · " + fmtDay(m) + " – " + fmtDay(addDays(m, 6)) + (long ? " " + toD(addDays(m, 6)).getUTCFullYear() : ""); }
+  const d = toD(x.a); return MNDL[d.getUTCMonth()].replace(/^./, c => c.toUpperCase()) + " " + d.getUTCFullYear();
+}
+const shortLabel = (g, x) => g === "dag" ? fmtDay(x.a) : g === "week" ? "wk " + isoWeek(x.m || x.a) : MND[toD(x.a).getUTCMonth()] + " '" + String(toD(x.a).getUTCFullYear()).slice(2);
+// vergelijkbare periode vorig jaar: dag en week 364 dagen terug (zelfde weekdag), maand dezelfde maand
+function lastYear(g, x) {
+  if (g === "maand") { const d = toD(x.a); const a = iso(new Date(Date.UTC(d.getUTCFullYear() - 1, d.getUTCMonth(), 1))); const b = iso(new Date(Date.UTC(d.getUTCFullYear() - 1, d.getUTCMonth() + 1, 0))); return { a, b }; }
+  const a = addDays(x.m || x.a, -364), b = addDays(x.b, -364); return { a, b };
+}
+// een lopende periode vergelijken we op hetzelfde aantal dagen
+function effective(x) { const b = x.b > LAST ? LAST : x.b; return { a: x.a, b }; }
+function valueFor(k, x, g) {
+  if (k.weekly && g === "dag") return null;
+  const e = effective(x); if (e.b < e.a) return null;
+  return k.calc(e.a, e.b);
+}
+function lyFor(k, x, g) {
+  if (k.weekly && g === "dag") return null;
+  const e = effective(x), ly = lastYear(g, x), len = diffDays(e.a, e.b);
+  const a = ly.a, b = g === "maand" && !x.lopend ? ly.b : addDays(ly.a, len);
+  if (b < START) return null;
+  return k.calc(a < START ? START : a, b);
+}
+// absolute omzet achter een aandeel-KPI: zelfde periodelogica, alleen de abs-berekening
+const absK = k => k.abs ? { ...k, calc: k.abs, f: "eur" } : null;
+function targetFor(k, x) { if (!k.target) return null; const e = effective(x); return k.target(e.a, e.b); }
+
+function status(k, v, t) {
+  if (v == null || t == null) return null;
+  const r = k.dir > 0 ? v / t : t / v;
+  if (r >= 1) return { c: "good", i: "✓", l: "op doel" };
+  if (r >= 0.9) return { c: "warning", i: "!", l: "dichtbij" };
+  return { c: "critical", i: "✕", l: k.dir > 0 ? "onder doel" : "boven doel" };
+}
+function deltaText(k, v, p) {
+  if (v == null || p == null) return null;
+  if (k.f === "eur" || k.f === "int" && k.kind === "sum") { if (!p) return null; const r = (v - p) / Math.abs(p); return (r >= 0 ? "▲ " : "▼ ") + nf(1).format(Math.abs(r * 100)) + "%"; }
+  if (k.f === "pct") { const d = (v - p) * 100; return (d >= 0 ? "▲ " : "▼ ") + nf(2).format(Math.abs(d)) + " pp"; }
+  const d = v - p; return (d >= 0 ? "▲ " : "▼ ") + (k.f === "int" ? nf(0) : nf(2)).format(Math.abs(d));
+}
+
+// ---------- tegels ----------
+let BK = [];
+function render() {
+  BK = buckets(gran);
+  if (cur == null || cur >= BK.length) cur = BK.length - 1;
+  // standaard: laatste volledige periode
+  const sel = $("#period"); sel.textContent = "";
+  BK.forEach((x, i) => { const o = el("option", null, label(gran, x, true) + (x.lopend ? " (lopend)" : "")); o.value = i; sel.appendChild(o); });
+  sel.value = cur;
+  $("#prev").disabled = cur <= 0; $("#next").disabled = cur >= BK.length - 1;
+  $("#cmpnote").textContent = "Klik op een KPI voor verloop en vergelijking" + (BK[cur].lopend ? " · lopende periode" : "");
+
+  const x = BK[cur];
+  const main = $("#main"); main.textContent = "";
+  const wrap = el("div", "groups");
+  for (const g of [...new Set(KPIS.map(k => k.g))]) {
+    const c = el("section", "card"); c.appendChild(el("h2", null, g));
+    for (const k of KPIS.filter(k => k.g === g)) c.appendChild(kpiRow(k, x));
+    wrap.appendChild(c);
+  }
+  main.appendChild(wrap);
+  postHeight();
+}
+// hoofdscherm: alleen waarde en doel; vergelijking en verloop zitten in het detailvenster
+// verwachte eindwaarde tussen haakjes (ROAS Google Ads), alleen als die merkbaar afwijkt van de stand nu
+const expText = (k, x, v, ly) => { if (ly || !k.expected || v == null) return ""; const e = effective(x), ev = k.expected(e.a, e.b); return ev != null && Math.abs(ev - v) >= 0.05 ? " (" + fmt(k.f, ev) + ")" : ""; };
+const mark = (k, x, g, v, ly) => (estFor(k, x, g, ly) ? "≈ " : "") + fmt(k.f, v) + (!ly && bolStale(k, x, g) ? "*" : "") + expText(k, x, v, ly);
+function kpiRow(k, x) {
+  const b = el("button", "row"); b.type = "button";
+  b.setAttribute("aria-label", k.label + ", verloop en vergelijking");
+  b.title = k.sub;
+  b.appendChild(el("span", "r-label", k.label));
+  const v = valueFor(k, x, gran), dayOnly = k.weekly && gran === "dag";
+  b.appendChild(el("span", "r-val" + (v == null || dayOnly ? " na" : ""), dayOnly ? "per week" : v == null ? "geen data" : mark(k, x, gran, v)));
+  const t = targetFor(k, x);
+  if (t != null) b.appendChild(el("span", "r-goal", "doel " + fmt(k.f, t)));
+  b.addEventListener("click", () => openDetail(k));
+  return b;
+}
+// uitsplitsing marketingkosten per kanaal, onder de samenvatting
+function costBreakdown(x, prev, g) {
+  const box = $("#d-cost"); box.textContent = ""; box.hidden = false;
+  const e = effective(x), pe = prev ? (x.lopend ? { a: prev.a, b: addDays(prev.a, diffDays(x.a, LAST)) } : effective(prev)) : null;
+  const t = el("table"), th = el("thead"), hr = el("tr");
+  ["Kanaal", label(g, x), pe ? { dag: "Vorige dag", week: "Vorige week", maand: "Vorige maand" }[g] : null, "Aandeel"].filter(Boolean).forEach(h => hr.appendChild(el("th", null, h)));
+  th.appendChild(hr); t.appendChild(th);
+  const tb = el("tbody"), tot = kosten(e.a, e.b);
+  const lines = [["Google Ads", a => sumR("gads_kosten", a.a, a.b)], ["Meta (Facebook + Instagram)", a => sumR("meta_kosten", a.a, a.b)], ["Microsoft Ads (Bing)", a => sumR("bing_kosten", a.a, a.b)]];
+  if (D.bol_in_kosten) lines.push(["Bol-advertenties", a => bolCost(a.a, a.b)]);
+  for (const [name, f] of lines) {
+    const tr = el("tr"); tr.appendChild(el("td", null, name));
+    const cv = f(e), val = typeof cv === "object" && cv ? cv : { v: cv, stale: false };
+    tr.appendChild(el("td", null, val.v == null ? "–" : fmt("eur", val.v) + (val.stale ? "*" : "")));
+    if (pe) { const pv = f(pe), p = typeof pv === "object" && pv ? pv : { v: pv, stale: false }; tr.appendChild(el("td", null, p.v == null ? "–" : fmt("eur", p.v) + (p.stale ? "*" : ""))); }
+    tr.appendChild(el("td", null, val.v == null || !tot ? "–" : fmt("pct", val.v / tot)));
+    tb.appendChild(tr);
+  }
+  const tr = el("tr", "tot"); tr.appendChild(el("td", null, "Totaal"));
+  const st = D.bol_in_kosten && bolCost(e.a, e.b).stale;
+  tr.appendChild(el("td", null, fmt("eur", tot) + (st ? "*" : "")));
+  if (pe) tr.appendChild(el("td", null, fmt("eur", kosten(pe.a, pe.b)) + (D.bol_in_kosten && bolCost(pe.a, pe.b).stale ? "*" : "")));
+  tr.appendChild(el("td", null, tot ? "100%" : "–"));
+  tb.appendChild(tr); t.appendChild(tb); box.appendChild(t);
+  const n = el("div", "note", "Bol-advertentiekosten vanaf 12 september 2026 per dag uit de bol Advertising API, excl. btw (net als Google Ads en Meta). Daarvoor uit het budgetbestand, per maand ingevuld en naar rato van het aantal dagen verdeeld. * Voor die oudere periode is het bedrag nog niet (volledig) ingevuld, of de maand loopt nog.");
+  box.appendChild(n);
+}
+// samenvatting bovenin het detailvenster: geselecteerde periode, doel, vs vorige, vs vorig jaar
+function detailSummary(k) {
+  const box = $("#d-sum"); box.textContent = ""; $("#d-cost").hidden = true; $("#d-cost").textContent = "";
+  const g = detailGran(), bk = g === gran ? BK : buckets(g);
+  const ref = BK[cur].b > LAST ? LAST : BK[cur].b;
+  const i = g === gran ? cur : bk.findIndex(x => x.a <= ref && ref <= x.b);
+  const x = bk[i], prev = bk[i - 1]; if (!x) return;
+  const v = valueFor(k, x, g), t = targetFor(k, x), st = status(k, v, t);
+  const cell = (lab, val, extra) => { const d = el("div"); d.appendChild(el("small", null, lab)); d.appendChild(el("b", null, val)); if (extra) d.appendChild(extra); box.appendChild(d); };
+  cell(label(g, x) + (x.lopend ? " (lopend)" : ""), v == null ? "–" : mark(k, x, g, v));
+  if (t != null) { let p = null; if (st) { p = el("span"); const q = el("span", "pill " + st.c); q.appendChild(el("i", null, st.i)); q.appendChild(document.createTextNode(st.l)); p.appendChild(q); } cell("Doel", fmt(k.f, t), p); }
+  if (prev) {
+    let pv;
+    if (x.lopend) { const len = diffDays(x.a, LAST); pv = k.weekly ? valueFor(k, prev, g) : k.calc(prev.a, addDays(prev.a, len)); }
+    else pv = valueFor(k, prev, g);
+    cell({ dag: "Vorige dag", week: "Vorige week", maand: "Vorige maand" }[g], fmt(k.f, pv), el("span", null, deltaText(k, v, pv) || "–"));
+  }
+  if (k.id === "kosten") costBreakdown(x, prev, g);
+  const ly = lyFor(k, x, g);
+  cell("Vorig jaar" + (ly != null && estFor(k, x, g, true) ? " (geschat)" : ""), fmt(k.f, ly), el("span", null, deltaText(k, v, ly) || (ly == null ? "geen vergelijking" : "–")));
+  // absolute omzet en eventuele extra cijfers (Klaviyo bij Email), elk met vorige periode en vorig jaar
+  const extra = [absK(k) && { ...absK(k), xl: k.absLabel }].concat((k.extras || []).map(e => ({ ...k, kind: "sum", weekly: false, ...e, xl: e.label }))).filter(Boolean);
+  for (const ak of extra) {
+    const av = valueFor(ak, x, g);
+    let pv = null;
+    if (prev) pv = x.lopend && !ak.weekly ? ak.calc(prev.a, addDays(prev.a, diffDays(x.a, LAST))) : valueFor(ak, prev, g);
+    const lv = lyFor(ak, x, g), parts = [];
+    if (prev) parts.push("vorige " + fmt(ak.f, pv) + (deltaText(ak, av, pv) ? " (" + deltaText(ak, av, pv) + ")" : ""));
+    parts.push("vorig jaar " + fmt(ak.f, lv) + (deltaText(ak, av, lv) ? " (" + deltaText(ak, av, lv) + ")" : ""));
+    cell(ak.xl, av == null ? "–" : fmt(ak.f, av), el("span", null, parts.join(" · ")));
+  }
+}
+
+// ---------- detail ----------
+const RANGES = { dag: [["30 d", 30], ["90 d", 90], ["1 jaar", 365]], week: [["13 wk", 13], ["26 wk", 26], ["52 wk", 52], ["Alles", 1e9]], maand: [["12 mnd", 12], ["Alles", 1e9]] };
+let DK = null, dRange = 1, showTable = false;
+function openDetail(k) {
+  DK = k; dRange = Math.min(1, RANGES[detailGran()].length - 1); showTable = false;
+  $("#d-group").textContent = k.g; $("#d-title").textContent = k.label;
+  $("#d-sub").textContent = k.sub + (k.weekly ? " · alleen weekcijfers beschikbaar" : "");
+  detailSummary(k);
+  drawDetail();
+  const dlg = $("#detail"); if (!dlg.open) dlg.showModal();
+}
+const detailGran = () => DK && DK.weekly && gran === "dag" ? "week" : gran;
+function drawDetail() {
+  const g = detailGran(), k = DK, bk = buckets(g);
+  const end = g === gran ? cur : bk.length - 1;
+  const rs = RANGES[g]; if (dRange >= rs.length) dRange = rs.length - 1;
+  const n = rs[dRange][1], from = Math.max(0, end - n + 1);
+  const rows = [];
+  const ak = absK(k), xk = (k.extras || []).map(e => ({ ...k, kind: "sum", weekly: false, ...e }));
+  for (let i = from; i <= end; i++) { const x = bk[i]; rows.push({ x, lab: shortLabel(g, x), long: label(g, x, true) + (x.lopend ? " (lopend)" : ""), v: valueFor(k, x, g), ly: lyFor(k, x, g), t: targetFor(k, x), ev: estFor(k, x, g), ely: estFor(k, x, g, true), abs: ak ? valueFor(ak, x, g) : null, ex: xk.map(e => valueFor(e, x, g)) }); }
+  // bereikknoppen
+  const r = $("#d-range"); r.textContent = "";
+  rs.forEach(([l], i) => { const b = el("button", null, l); b.type = "button"; b.setAttribute("aria-pressed", i === dRange); b.onclick = () => { dRange = i; drawDetail(); }; r.appendChild(b); });
+  // legenda
+  const lg = $("#d-legend"); lg.textContent = "";
+  const hasLy = rows.some(x => x.ly != null), hasT = rows.some(x => x.t != null);
+  const key = (stroke, dash, txt) => { const s = el("span"); const k2 = sv("svg", { viewBox: "0 0 22 8" }); k2.appendChild(sv("line", { x1: 1, y1: 4, x2: 21, y2: 4, stroke, "stroke-width": 2, "stroke-dasharray": dash || "", "stroke-linecap": "round" })); s.appendChild(k2); s.appendChild(document.createTextNode(txt)); lg.appendChild(s); };
+  key("var(--series-1)", "", "Deze periode");
+  if (hasLy) key("var(--series-2)", "5 4", "Vorig jaar");
+  if (hasT) key("var(--ref)", "2 4", "Doel");
+  $("#d-toggle").textContent = showTable ? "Toon grafiek" : "Toon tabel";
+  $("#d-chart").hidden = showTable; $("#d-table").hidden = !showTable;
+  if (showTable) drawTable(rows, k, hasLy, hasT); else drawChart(rows, k, hasLy, hasT);
+  const notes = [];
+  if (k.id.startsWith("roas")) notes.push("ROAS per punt is het rollende 30-dagengemiddelde tot het einde van die periode, zoals in de KPI-sheet.");
+  if (k.id === "roas_gads") notes.push("Tussen haakjes de verwachte ROAS: Google Ads rekent conversies toe aan de dag van de klik, dus recente dagen lopen nog op. Elke dag is opgehoogd naar zijn verwachte eindwaarde met de vertragingscurve van dit account (klikken juni t/m augustus 2026: 77% van de conversiewaarde binnen 1 dag, 91% binnen 14, 97% binnen 30, 100% binnen 90 dagen). Alleen getoond als die minstens 0,05 afwijkt.");
+  const BRUTO = ["gads_omzet", "gads_aandeel", "roas_gads", "social_omzet", "social_aandeel", "roas_social", "email", "seo", "geo", "sea", "social"];
+  if (BRUTO.includes(k.id)) notes.push("Kanaalomzet is bruto: zoals de bron hem geeft, incl. btw en verzendkosten (Google Ads, Meta, Klaviyo en GA4 rekenen zo). Percentages zijn die bruto omzet gedeeld door de Shopify-omzet (netto, excl. btw en verzendkosten). Netto is de kanaalomzet ongeveer 19% lager." + (["gads_aandeel", "gads_omzet", "roas_gads", "sea"].includes(k.id) ? " Google Ads gebruikt zijn eigen attributie, tot 90 dagen na een klik." : ""));
+  if (["gads_omzet", "gads_aandeel", "roas_gads"].includes(k.id)) notes.push("De laatste dagen van Google Ads lopen nog op door conversievertraging.");
+  if (["seo", "geo", "social", "social_omzet", "social_aandeel"].includes(k.id)) notes.push("De omzet per kanaal komt uit GA4, de enige bron die omzet over kanalen verdeelt. Dagen waarop GA4 geen omzet aan kanalen toewijst tellen niet mee.");
+  if (k.id === "email") { const ek = D.email_kosten; notes.push("Alle e-mailcijfers komen uit Klaviyo, beschikbaar vanaf 14 april 2026. Aandeel = Klaviyo-omzet gedeeld door Shopify-omzet (de andere kanalen hier delen GA4-kanaalomzet door de Shopify-omzet). Omzet en orders volgen de attributie van Klaviyo (klik of open binnen het attributievenster) en overlappen daardoor met andere kanalen." + (ek ? " ROAS e-mail = Klaviyo-omzet / kosten, rollend 30 dagen; kosten " + ek.bedrag + " " + ek.valuta + " per maand (Klaviyo) = " + fmt("eur", ek.eur_per_maand) + " tegen ECB-koers " + nf(4).format(ek.koers) + " van " + fmtDayY(ek.koers_datum) + ", vanaf " + fmtDayY(ek.vanaf) + ", naar rato van dagen." : "") + " Nieuwsbrieven = campagnes; flows = automatische mails (welkom, verlaten winkelwagen, na aankoop enzovoort), berekend als totaal min nieuwsbrieven. Click rate = unieke clicks per dag / ontvangen e-mails. Een open rate staat er bewust niet in: Apple Mail Privacy Protection telt automatische opens mee."); }
+  if (k.id === "reviewscore" || k.id === "reviews") notes.push("Uitsplitsing per bron vanaf week 40 van 2026 (28 september); de Kiyoh-waarde van die week is afgeleid uit het gemiddelde en het totaal in de sheet. Reviewscore = gemiddelde van Kiyoh (uit 10) en Google en Trustpilot (uit 5, keer 2). Google en Trustpilot worden elke maandag in de browser afgelezen, Kiyoh van kiyoh.com.");
+  if (k.weekly) notes.push("Komt uit de KPI-sheet (tab KPI's week), beschikbaar vanaf week 14 van 2026.");
+  if (k.id === "bol") notes.push("Bol-omzet en -orders komen uit Shopify: bol-orders lopen via het verkoopkanaal Market Sync. Omzet = bruto verkopen excl. btw, voor retouren, en komt overeen met wat bol zelf toont. Beschikbaar vanaf 1 april 2026. Let op: de Shopify-omzet waardoor gedeeld wordt bevat de bol-orders ook. Bol-advertenties uit de bol Advertising API, vanaf 12 september 2026 (bol geeft maximaal 30 dagen terug, de historie groeit elke nacht aan). Kosten excl. btw, net als Google Ads en Meta; omzet is wat bol binnen 14 dagen aan een advertentieklik toeschrijft. ROAS rollend 30 dagen.");
+  if (k.usesOmzet && D.shopify_vanaf) { const es = D.omzet_schatting; notes.push("Shopify-omzet vanaf " + fmtDayY(D.shopify_vanaf) + " (livegang op Shopify)." + (es && es.factor ? " Daarvoor is de omzet geschat als GA4-omzet × " + nf(3).format(es.factor) + ", de verhouding Shopify/GA4 van april t/m september 2026 (per maand tussen " + es.spreiding.match(/[0-9],[0-9]+/g).slice(0, 2).join(" en ") + "). Geschatte waarden: ≈ voor de waarde, open bolletje in de grafiek, '(geschat)' in de tooltip." : "")); }
+  if (k.id === "omzet") notes.push("Doel: " + fmt("eur", T().omzet_shopify.per_week) + " per week, naar rato van het aantal dagen.");
+  $("#d-note").textContent = notes.join(" ");
+}
+function drawTable(rows, k, hasLy, hasT) {
+  const box = $("#d-table"); box.textContent = "";
+  const t = el("table"), th = el("thead"), hr = el("tr");
+  const ex = k.extras || [];
+  ["Periode", "Waarde"].concat(k.abs ? [k.absLabel] : [], ex.map(e => e.label), hasLy ? ["Vorig jaar"] : [], hasT ? ["Doel"] : []).forEach(h => hr.appendChild(el("th", null, h)));
+  th.appendChild(hr); t.appendChild(th);
+  const tb = el("tbody");
+  rows.slice().reverse().forEach(r => { const tr = el("tr"); tr.appendChild(el("td", null, r.long)); tr.appendChild(el("td", null, r.v == null ? "–" : mark(k, r.x, detailGran(), r.v))); if (k.abs) tr.appendChild(el("td", null, r.abs == null ? "–" : fmt("eur", r.abs))); ex.forEach((e, j) => tr.appendChild(el("td", null, r.ex[j] == null ? "–" : fmt(e.f, r.ex[j])))); if (hasLy) tr.appendChild(el("td", null, r.ly == null ? "–" : mark(k, r.x, detailGran(), r.ly, true))); if (hasT) tr.appendChild(el("td", null, fmt(k.f, r.t))); tb.appendChild(tr); });
+  t.appendChild(tb); box.appendChild(t);
+}
+function drawChart(rows, k, hasLy, hasT) {
+  const box = $("#d-chart"); box.textContent = "";
+  const W = Math.max(300, box.clientWidth || 880), H = W < 520 ? 260 : 340;
+  const m = { l: W < 520 ? 52 : 68, r: 12, t: 12, b: 30 };
+  const iw = W - m.l - m.r, ih = H - m.t - m.b;
+  const all = []; rows.forEach(r => { [r.v, hasLy ? r.ly : null, hasT ? r.t : null].forEach(v => { if (v != null && isFinite(v)) all.push(v); }); });
+  if (!all.length) { box.appendChild(el("div", "state", "Geen data in deze periode")); return; }
+  let mn = Math.min(...all), mx = Math.max(...all);
+  if (k.f !== "score") mn = Math.min(0, mn);
+  if (mx === mn) mx = mn + 1;
+  const ticks = niceTicks(mn, mx, 5); mn = ticks[0]; mx = ticks[ticks.length - 1];
+  const X = i => m.l + (rows.length === 1 ? iw / 2 : i / (rows.length - 1) * iw);
+  const Y = v => m.t + ih - (v - mn) / (mx - mn) * ih;
+  const s = sv("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": k.label + " verloop" });
+  ticks.forEach(t => {
+    s.appendChild(sv("line", { x1: m.l, x2: W - m.r, y1: Y(t), y2: Y(t), stroke: "var(--grid)", "stroke-width": 1 }));
+    const tx = sv("text", { x: m.l - 8, y: Y(t) + 4, "text-anchor": "end", "font-size": 11.5, fill: "var(--muted)", "font-family": "Raleway, sans-serif" }); tx.textContent = compact(k.f, t); s.appendChild(tx);
+  });
+  const step = Math.max(1, Math.ceil(rows.length / Math.floor(iw / 64)));
+  rows.forEach((r, i) => { if (i % step && i !== rows.length - 1) return; if (i !== rows.length - 1 && rows.length - 1 - i < step) return; const tx = sv("text", { x: X(i), y: H - 8, "text-anchor": "middle", "font-size": 11.5, fill: "var(--muted)", "font-family": "Raleway, sans-serif" }); tx.textContent = r.lab; s.appendChild(tx); });
+  const path = (key, attrs) => { let d = "", pen = false; rows.forEach((r, i) => { const v = r[key]; if (v == null || !isFinite(v)) { pen = false; return; } d += (pen ? "L" : "M") + X(i).toFixed(1) + " " + Y(v).toFixed(1); pen = true; }); if (d) s.appendChild(sv("path", Object.assign({ d, fill: "none", "stroke-linejoin": "round", "stroke-linecap": "round" }, attrs))); };
+  if (hasT) path("t", { stroke: "var(--ref)", "stroke-width": 1.5, "stroke-dasharray": "2 4" });
+  if (hasLy) path("ly", { stroke: "var(--series-2)", "stroke-width": 2, "stroke-dasharray": "5 4" });
+  path("v", { stroke: "var(--series-1)", "stroke-width": 2 });
+  rows.forEach((r, i) => { if (r.ev && r.v != null) s.appendChild(sv("circle", { cx: X(i), cy: Y(r.v), r: 3.5, fill: "var(--surface)", stroke: "var(--series-1)", "stroke-width": 2 })); });
+  // laatste waarde direct gelabeld
+  const li = rows.map(r => r.v).lastIndexOf(rows.filter(r => r.v != null).slice(-1)[0]?.v);
+  if (li >= 0 && rows[li].v != null) {
+    s.appendChild(sv("circle", { cx: X(li), cy: Y(rows[li].v), r: 4, fill: "var(--series-1)", stroke: "var(--surface)", "stroke-width": 2 }));
+  }
+  // hoverlaag
+  const cross = sv("line", { y1: m.t, y2: m.t + ih, stroke: "var(--muted)", "stroke-width": 1, opacity: 0 });
+  const dot1 = sv("circle", { r: 4, fill: "var(--series-1)", stroke: "var(--surface)", "stroke-width": 2, opacity: 0 });
+  const dot2 = sv("circle", { r: 4, fill: "var(--series-2)", stroke: "var(--surface)", "stroke-width": 2, opacity: 0 });
+  s.appendChild(cross); s.appendChild(dot2); s.appendChild(dot1);
+  const hit = sv("rect", { x: m.l - 10, y: 0, width: iw + 20, height: H, fill: "transparent", tabindex: 0 });
+  s.appendChild(hit); box.appendChild(s);
+  const tip = el("div", "tip"); box.appendChild(tip);
+  const show = i => {
+    const r = rows[i]; const x = X(i);
+    cross.setAttribute("x1", x); cross.setAttribute("x2", x); cross.setAttribute("opacity", .6);
+    const pos = (dot, v) => { if (v == null) { dot.setAttribute("opacity", 0); return; } dot.setAttribute("cx", x); dot.setAttribute("cy", Y(v)); dot.setAttribute("opacity", 1); };
+    pos(dot1, r.v); pos(dot2, hasLy ? r.ly : null);
+    tip.textContent = ""; tip.appendChild(el("div", "h", r.long));
+    const row = (stroke, dash, name, v) => { const d = el("div", "r"); const kk = el("span", "k"); const ks = sv("svg", { viewBox: "0 0 14 6" }); ks.appendChild(sv("line", { x1: 1, y1: 3, x2: 13, y2: 3, stroke, "stroke-width": 2, "stroke-dasharray": dash })); kk.appendChild(ks); kk.appendChild(document.createTextNode(name)); d.appendChild(kk); d.appendChild(el("b", null, fmt(k.f, v))); tip.appendChild(d); };
+    row("var(--series-1)", "", r.ev ? "Waarde (geschat)" : "Waarde", r.v);
+    if (k.abs) { const d = el("div", "r"); d.appendChild(el("span", "k", k.absLabel)); d.appendChild(el("b", null, fmt("eur", r.abs))); tip.appendChild(d); }
+    if (hasLy) row("var(--series-2)", "4 3", r.ely ? "Vorig jaar (geschat)" : "Vorig jaar", r.ly);
+    if (hasT) row("var(--ref)", "2 3", "Doel", r.t);
+    const bw = box.clientWidth, sc = bw / W, tw = tip.offsetWidth;
+    let left = x * sc + 12; if (left + tw > bw) left = x * sc - tw - 12;
+    tip.style.left = Math.max(0, left) + "px"; tip.style.top = (m.t * sc + 4) + "px"; tip.style.opacity = 1;
+  };
+  const hide = () => { tip.style.opacity = 0; cross.setAttribute("opacity", 0); dot1.setAttribute("opacity", 0); dot2.setAttribute("opacity", 0); };
+  const idxAt = ev => { const rc = s.getBoundingClientRect(); const px = (ev.clientX - rc.left) / rc.width * W; return Math.max(0, Math.min(rows.length - 1, Math.round((px - m.l) / (iw || 1) * (rows.length - 1)))); };
+  let fi = rows.length - 1;
+  hit.addEventListener("pointermove", ev => show(fi = idxAt(ev)));
+  hit.addEventListener("pointerleave", hide);
+  hit.addEventListener("focus", () => show(fi));
+  hit.addEventListener("blur", hide);
+  hit.addEventListener("keydown", ev => { if (ev.key === "ArrowLeft") { fi = Math.max(0, fi - 1); show(fi); ev.preventDefault(); } if (ev.key === "ArrowRight") { fi = Math.min(rows.length - 1, fi + 1); show(fi); ev.preventDefault(); } });
+}
+function niceTicks(mn, mx, n) {
+  const span = mx - mn, raw = span / n, p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p;
+  const st = (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * p;
+  const a = Math.floor(mn / st) * st, b = Math.ceil(mx / st) * st, t = [];
+  for (let v = a; v <= b + st / 2; v += st) t.push(+v.toFixed(10));
+  return t;
+}
+
+// ---------- iframe-hoogte ----------
+function postHeight() { if (window.parent !== window) window.parent.postMessage({ type: "kpi-dashboard-height", klant, height: document.documentElement.scrollHeight }, "*"); }
+new ResizeObserver(postHeight).observe(document.body);
+
+// ---------- events ----------
+$("#gran").addEventListener("click", ev => {
+  const b = ev.target.closest("button"); if (!b) return;
+  const ng = b.dataset.g; if (ng === gran) return;
+  const ref = BK[cur] ? (BK[cur].b > LAST ? LAST : BK[cur].b) : LAST;
+  gran = ng; [...$("#gran").children].forEach(x => x.setAttribute("aria-pressed", x.dataset.g === gran));
+  const nb = buckets(gran); cur = nb.findIndex(x => x.a <= ref && ref <= x.b); if (cur < 0) cur = nb.length - 1;
+  render();
+});
+$("#period").addEventListener("change", ev => { cur = +ev.target.value; render(); });
+$("#prev").addEventListener("click", () => { if (cur > 0) { cur--; render(); } });
+$("#next").addEventListener("click", () => { if (cur < BK.length - 1) { cur++; render(); } });
+$("#d-close").addEventListener("click", () => $("#detail").close());
+$("#detail").addEventListener("click", ev => { if (ev.target === ev.currentTarget) ev.currentTarget.close(); });
+$("#d-toggle").addEventListener("click", () => { showTable = !showTable; drawDetail(); });
+let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { if ($("#detail").open && !showTable) drawDetail(); }, 120); });
+
+// ---------- laden ----------
+fetch("data/" + klant + ".json", { cache: "no-cache" }).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(data => {
+  D = data; START = D.dagen[0];
+  // laatste volledige dag: de laatste dag met Shopify-omzet
+  const s = D.reeksen.shopify_omzet; let li = s.length - 1; while (li > 0 && s[li] == null) li--;
+  LAST = D.dagen[li];
+  document.title = D.naam + " · KPI-dashboard";
+  $("#title").textContent = D.naam;
+  const g = new Date(D.gegenereerd);
+  const fr = $("#fresh"); fr.textContent = "";
+  fr.appendChild(document.createTextNode("Data t/m ")); fr.appendChild(el("b", null, fmtDayY(LAST)));
+  fr.appendChild(el("br")); fr.appendChild(document.createTextNode("Ververst " + g.toLocaleDateString("nl-NL", { day: "numeric", month: "short" }) + " om " + g.toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })));
+  BK = buckets(gran); cur = BK.length - 1; if (BK[cur].lopend && cur > 0) cur--;
+  render();
+}).catch(err => {
+  $("#main").textContent = ""; $("#main").appendChild(el("div", "state", "Kon de data niet laden (data/" + klant + ".json). Open het dashboard via een webserver, niet als los bestand."));
+});
+})();
+</script>
+</body>
+</html>
